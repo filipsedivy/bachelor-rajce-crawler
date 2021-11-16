@@ -1,0 +1,34 @@
+version: '3.7'
+
+networks:
+  rajce-proxy.network:
+    driver: bridge
+
+services:
+  php:
+    build: ./docker/php
+    restart: always
+    tty: true
+    container_name: rajce-proxy.php
+    networks:
+      - rajce-proxy.network
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/var/www/app.dev
+    environment:
+      - NETTE_DEBUG
+
+  apache:
+    build: ./docker/apache
+    restart: always
+    container_name: rajce-proxy.apache
+    networks:
+      - rajce-proxy.network
+    depends_on:
+      - php
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - .:/var/www/app.dev

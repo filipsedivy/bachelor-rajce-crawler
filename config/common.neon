@@ -1,0 +1,28 @@
+parameters:
+
+
+extensions:
+    api: Apitte\Core\DI\ApiExtension
+
+
+session:
+	expiration: 14 days
+
+
+di:
+	export:
+		parameters: no
+		tags: no
+
+
+api:
+    debug: %debugMode%
+    catchException: true
+    plugins:
+        Apitte\Core\DI\Plugin\CoreMappingPlugin:
+        Apitte\Core\DI\Plugin\CoreDecoratorPlugin:
+        Apitte\Negotiation\DI\NegotiationPlugin:
+        Apitte\Debug\DI\DebugPlugin:
+            debug:
+                panel: %debugMode%
+                negotiation: %debugMode%

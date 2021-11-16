@@ -1,0 +1,6 @@
+services:
+    - App\Core\BrowserKitFactory
+    - App\Controllers\PingController
+    - App\Controllers\UserController
+    - App\Service\UserService
+    - App\Router\RouterFactory::createRouter
