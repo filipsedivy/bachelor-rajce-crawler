@@ -25,12 +25,16 @@
 	},
 	"require-dev": {
 		"nette/tester": "^2.3",
-		"symfony/thanks": "^1"
+		"symfony/thanks": "^1",
+		"phpstan/phpstan": "^1.1"
 	},
 	"autoload": {
 		"psr-4": {
 			"App\\": "app"
 		}
 	},
-	"minimum-stability": "stable"
+	"minimum-stability": "stable",
+	"scripts": {
+		"phpstan": "phpstan analyse app --level max"
+	}
 }

@@ -2,7 +2,6 @@
 
 namespace App\Core;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Nette\Utils\Strings;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -18,7 +17,6 @@ trait CrawlerHelper
         return $match[1];
     }
 
-    #[ArrayShape(['albums' => "int", 'views' => "int", 'followers' => "int"])]
     public function parseUserHeader(Crawler $header): array
     {
         $albums = Strings::trim($header->filter('.list-inline-item')->first()->text());
