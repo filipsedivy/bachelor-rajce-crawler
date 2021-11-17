@@ -4,9 +4,11 @@ namespace App\Service;
 
 use App\Core\BrowserKitFactory;
 use App\Core\CrawlerHelper;
+use App\Model\Entity\AlbumEntity;
 use App\Model\Entity\UserEntity;
 use Goutte\Client;
 use Nette\Schema;
+use Nette\Utils\Arrays;
 use Nette\Utils\Json;
 use Nette\Utils\Strings;
 
@@ -55,7 +57,7 @@ final class UserService
 
     private function getAlbums(UserEntity $entity, string $accessCode, int $albums): array
     {
-        $result = [];
+        $results = [];
         $totalPages = ceil($albums / 23);
 
         for ($i = 0; $i <= $totalPages; $i++) {
@@ -64,28 +66,14 @@ final class UserService
                 continue;
             }
 
-            $data = $page['data'];
+            $result = Arrays::map($page['data']['albums'], function ($value) {
+                return AlbumEntity::createFromArray($value)->toArray();
+            });
 
-            foreach ($data['albums'] as $album) {
-                $result[] = [
-                    'permalink' => $album['permalink'],
-                    'url' => $album['url'],
-                    'name' => $album['name'],
-                    'storage' => $album['storage'],
-                    'username' => $album['username'],
-                    'is_public' => $album['is_public'],
-                    'is_code_protected' => $album['is_code_protected'],
-                    'is_nsfw' => $album['is_nsfw'],
-                    'media_count' => $album['media_count'],
-                    'photo_count' => $album['photo_count'],
-                    'video_count' => $album['video_count'],
-                    'like_count' => $album['like_count'],
-                    'view_count' => $album['view_count']
-                ];
-            }
+            $results = array_merge($results, $result);
         }
 
-        return $result;
+        return $results;
     }
 
     private function getAlbumPage(UserEntity $entity, string $accessCode, int $page): array
