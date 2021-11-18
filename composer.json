@@ -26,7 +26,8 @@
 	"require-dev": {
 		"nette/tester": "^2.3",
 		"symfony/thanks": "^1",
-		"phpstan/phpstan": "^1.1"
+		"phpstan/phpstan": "^1.1",
+		"nette/coding-standard": "^3.0"
 	},
 	"autoload": {
 		"psr-4": {
@@ -35,6 +36,8 @@
 	},
 	"minimum-stability": "stable",
 	"scripts": {
-		"phpstan": "phpstan analyse app --level max"
+		"phpstan": "phpstan analyse app --level max",
+		"check-cs": "ecs check app/ bin/ config/ tests/ www/ --config tests/coding-standards.php",
+		"fix-cs": "ecs check app/ bin/ config/ tests/ www/ --config tests/coding-standards.php --fix"
 	}
 }
