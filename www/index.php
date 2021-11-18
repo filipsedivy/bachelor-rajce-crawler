@@ -7,6 +7,6 @@ use Apitte\Core\Application\IApplication;
 require __DIR__ . '/../vendor/autoload.php';
 
 App\Bootstrap::boot()
-    ->createContainer()
-    ->getByType(IApplication::class)
-    ->run();
+	->createContainer()
+	->getByType(IApplication::class)
+	->run();

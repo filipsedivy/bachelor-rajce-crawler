@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers;
 
@@ -11,27 +12,27 @@ use Apitte\Core\UI\Controller\IController;
 use App\Core\Controller;
 use App\Service\UserService;
 
-#[Path("/user")]
+#[Path('/user')]
 final class UserController implements IController
 {
-    use Controller;
+	use Controller;
 
-    public function __construct(
-        private UserService $service
-    )
-    {
-    }
+	public function __construct(
+		private UserService $service
+	) {
+	}
 
-    #[Path("/{user}")]
-    #[Method("GET")]
-    #[RequestParameter(name: "user", type: "string", description: "User identification")]
-    public function index(ApiRequest $request, ApiResponse $response): ApiResponse
-    {
-        $entity = $this->service->check($request->getParameters());
-        try {
-            return $response->writeJsonBody($this->service->getUser($entity));
-        } catch (\InvalidArgumentException $exception) {
-            return $response->writeJsonBody($this->error('User not found'));
-        }
-    }
+
+	#[Path('/{user}')]
+	#[Method('GET')]
+	#[RequestParameter(name: 'user', type: 'string', description: 'User identification')]
+	public function index(ApiRequest $request, ApiResponse $response): ApiResponse
+	{
+		$entity = $this->service->check($request->getParameters());
+		try {
+			return $response->writeJsonBody($this->service->getUser($entity));
+		} catch (\InvalidArgumentException $exception) {
+			return $response->writeJsonBody($this->error('User not found'));
+		}
+	}
 }
