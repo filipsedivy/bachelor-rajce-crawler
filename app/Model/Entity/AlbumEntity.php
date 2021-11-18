@@ -43,6 +43,8 @@ final class AlbumEntity
 	private int $likeCount;
 
 	private ?string $description;
+
+
 	public static function createFromArray(array $data): self
 	{
 		$entity = new self;
@@ -183,6 +185,7 @@ final class AlbumEntity
 	}
 
 
+	/** @return mixed[] */
 	public function toArray(): array
 	{
 		return get_object_vars($this);
