@@ -1,2 +1,1 @@
-Rajče iDnes Proxy
-==========
+![Rajče iDNES API](.docs/logo.png "Rajče iDNES API")
