@@ -17,12 +17,17 @@ final class UserService
 {
 	use CrawlerHelper;
 
+	private const SUCCESS_STATUS = 'success';
+
 	private Client $client;
 
+	private int $offset;
 
-	public function __construct(BrowserKitFactory $browserKitFactory)
+
+	public function __construct(BrowserKitFactory $browserKitFactory, int $offset)
 	{
 		$this->client = $browserKitFactory->create();
+		$this->offset = $offset;
 	}
 
 
@@ -33,7 +38,8 @@ final class UserService
 	}
 
 
-	public function getUser(UserEntity $entity): array
+	/** @return mixed[] */
+	public function getUser(UserEntity $entity, int $page = 0): array
 	{
 		if (!$this->isUserExists($entity)) {
 			throw new \InvalidArgumentException('User not found');
@@ -43,10 +49,20 @@ final class UserService
 		$script = Strings::trim($response->filter('script')->text());
 		$accessCode = $this->getAccessCode($script);
 		$userHeader = $this->parseUserHeader($response->filter('.user-header-content'));
+
+		$totalPages = ceil($userHeader['albums'] / $this->offset);
+
 		return [
-			'header' => $userHeader,
-			'accessCode' => $accessCode,
-			'albums' => $this->getAlbums($entity, $accessCode, $userHeader['albums']),
+			'page' => [
+				'actual' => $page,
+				'itemsPerPage' => $this->offset,
+				'total' => $totalPages,
+			],
+			'security' => [
+				'accessCode' => $accessCode,
+			],
+			'information' => $userHeader,
+			'albums' => Arrays::map($this->getPage($entity, $accessCode, $page), fn(AlbumEntity $value) => $value->toArray()),
 		];
 	}
 
@@ -61,27 +77,8 @@ final class UserService
 	}
 
 
-	private function getAlbums(UserEntity $entity, string $accessCode, int $albums): array
-	{
-		$results = [];
-		$totalPages = ceil($albums / 23);
-
-		for ($i = 0; $i <= $totalPages; $i++) {
-			$page = $this->getAlbumPage($entity, $accessCode, $i);
-			if (!array_key_exists('status', $page) || $page['status'] !== 'success') {
-				continue;
-			}
-
-			$result = Arrays::map($page['data']['albums'], fn($value) => AlbumEntity::createFromArray($value)->toArray());
-
-			$results = array_merge($results, $result);
-		}
-
-		return $results;
-	}
-
-
-	private function getAlbumPage(UserEntity $entity, string $accessCode, int $page): array
+	/** @return AlbumEntity[] */
+	private function getPage(UserEntity $entity, string $accessCode, int $page): array
 	{
 		$payload = [
 			'username' => $entity->user,
@@ -90,8 +87,15 @@ final class UserService
 			'limit' => 23,
 			'access_code' => $accessCode,
 		];
+
 		$this->client->request('POST', $this->createBaseUrl($entity) . '/services/web/get-albums', $payload);
-		return Json::decode($this->client->getInternalResponse()->getContent(), Json::FORCE_ARRAY);
+		$response = Json::decode($this->client->getInternalResponse()->getContent(), Json::FORCE_ARRAY);
+
+		if (Arrays::get($response, 'status') !== self::SUCCESS_STATUS) {
+			return [];
+		}
+
+		return Arrays::map($response['data']['albums'], fn($value) => AlbumEntity::createFromArray($value));
 	}
 
 

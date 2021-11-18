@@ -6,6 +6,9 @@ namespace App\Core;
 
 trait Controller
 {
+	/**
+	 * @return array{error: bool, msg: string}
+	 */
 	public function error(string $message): array
 	{
 		$body = [

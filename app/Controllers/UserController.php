@@ -30,7 +30,9 @@ final class UserController implements IController
 	{
 		$entity = $this->service->check($request->getParameters());
 		try {
-			return $response->writeJsonBody($this->service->getUser($entity));
+			$page = (int) $request->getQueryParam('page', 0);
+			$user = $this->service->getUser($entity, $page);
+			return $response->writeJsonBody($user);
 		} catch (\InvalidArgumentException $exception) {
 			return $response->writeJsonBody($this->error('User not found'));
 		}

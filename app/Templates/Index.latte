@@ -1,0 +1,57 @@
+{varType string $logo}
+
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Rajče iDNES API</title>
+
+    <style>
+        .parameter {
+            background-color: lightcyan;
+            font-family: "Times New Roman", serif;
+            font-style: italic;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<img src="data:image/png;base64,{$logo}" alt="Rajče iDNES API" width="300px">
+
+<h3>Base information</h3>
+
+<ul>
+    <li>Version: {$version}</li>
+</ul>
+
+<h3>Simple API docs</h3>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>Endpoint</th>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr>
+        <td>/user/<code class="parameter">[user name]</code></td>
+        <td>GET</td>
+        <td>page=<b>int</b> | default=0</td>
+        <td>Get basic user and album information</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

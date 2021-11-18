@@ -1,6 +1,7 @@
 services:
     - App\Core\BrowserKitFactory
+    - App\Controllers\IndexController
     - App\Controllers\PingController
     - App\Controllers\UserController
-    - App\Service\UserService
+    - App\Service\UserService(offset: 23)
     - App\Router\RouterFactory::createRouter
