@@ -12,6 +12,7 @@ use Nette\Schema;
 use Nette\Utils\Arrays;
 use Nette\Utils\Json;
 use Nette\Utils\Strings;
+use Predis;
 
 final class UserService
 {
@@ -19,22 +20,70 @@ final class UserService
 
 	private const SUCCESS_STATUS = 'success';
 
+	private const USER_EXISTS_KEY = 'user:exists';
+
+	private const USER_DATA = 'user:data';
+
+	private const ALBUM_KEY = 'album';
+
 	private Client $client;
+
+	private Predis\Client $predis;
 
 	private int $offset;
 
 
-	public function __construct(BrowserKitFactory $browserKitFactory, int $offset)
+	public function __construct(
+		BrowserKitFactory $browserKitFactory,
+		Predis\Client $predis,
+		int $offset
+	)
 	{
 		$this->client = $browserKitFactory->create();
+		$this->predis = $predis;
 		$this->offset = $offset;
 	}
 
 
 	public function isUserExists(UserEntity $entity): bool
 	{
-		$this->client->request('GET', $this->createBaseUrl($entity));
-		return $this->client->getInternalResponse()->getStatusCode() === 200;
+		$key = self::USER_EXISTS_KEY . ':' . $entity->user;
+		$value = $this->predis->get($key);
+
+		if ($value === null) {
+			$this->client->request('GET', $this->createBaseUrl($entity));
+			$value = $this->client->getInternalResponse()->getStatusCode() === 200;
+			$this->predis->set($key, Json::encode(['result' => $value]), 'EX', 60 * 5);
+		} else {
+			$value = Json::decode($value)->result;
+		}
+
+		return $value;
+	}
+
+
+	public function getFullUser(UserEntity $entity): array
+	{
+		if (!$this->isUserExists($entity)) {
+			throw new \InvalidArgumentException('User not found');
+		}
+
+		// Load first page
+		$result = $this->getUser($entity);
+		$accessCode = $result['security']['accessCode'];
+
+		// Get total pages
+		$totalPages = $result['page']['total'];
+
+		if ($totalPages > 1) {
+			for ($page = 1; $page <= $totalPages; $page++) {
+				$albumPage = Arrays::map($this->getPage($entity, $accessCode, $page), fn(AlbumEntity $value) => $value->toArray());
+				$result['albums'] = array_merge($result['albums'], $albumPage);
+				$result['page']['actual'] = $page;
+			}
+		}
+
+		return $result;
 	}
 
 
@@ -80,22 +129,44 @@ final class UserService
 	/** @return AlbumEntity[] */
 	private function getPage(UserEntity $entity, string $accessCode, int $page): array
 	{
-		$payload = [
-			'username' => $entity->user,
-			'sort' => 'createDateDesc',
-			'offset' => $page * 23,
-			'limit' => 23,
-			'access_code' => $accessCode,
-		];
+		$key = self::USER_DATA . ':' . $entity->user . ':page:' . $page;
 
-		$this->client->request('POST', $this->createBaseUrl($entity) . '/services/web/get-albums', $payload);
-		$response = Json::decode($this->client->getInternalResponse()->getContent(), Json::FORCE_ARRAY);
+		if ($this->predis->exists($key) === 0) {
+			$payload = [
+				'username' => $entity->user,
+				'sort' => 'createDateDesc',
+				'offset' => $page * 23,
+				'limit' => 23,
+				'access_code' => $accessCode,
+			];
 
-		if (Arrays::get($response, 'status') !== self::SUCCESS_STATUS) {
-			return [];
+			$this->client->request('POST', $this->createBaseUrl($entity) . '/services/web/get-albums', $payload);
+			$response = Json::decode($this->client->getInternalResponse()->getContent(), Json::FORCE_ARRAY);
+
+			if (Arrays::get($response, 'status') !== self::SUCCESS_STATUS) {
+				return [];
+			}
+
+			$data = Arrays::map($response['data']['albums'], function ($value): AlbumEntity {
+				$entity = AlbumEntity::createFromArray($value);
+				$key = self::ALBUM_KEY . ':' . $entity->getId();
+				if ($this->predis->exists($key) === 0) {
+					$this->predis->set($key, Json::encode($entity->toArray()));
+				}
+				return $entity;
+			});
+
+			$ids = Arrays::map($data, fn(AlbumEntity $entity) => $entity->getId());
+			$this->predis->set($key, Json::encode($ids), 'EX', 60 * 60 /* Expire 1 hour */);
+		} else {
+			$ids = Json::decode($this->predis->get($key));
+			$data = Arrays::map($ids, function (int $id): AlbumEntity {
+				$album = Json::decode($this->predis->get(self::ALBUM_KEY . ':' . $id), Json::FORCE_ARRAY);
+				return AlbumEntity::createFromArray($album);
+			});
 		}
 
-		return Arrays::map($response['data']['albums'], fn($value) => AlbumEntity::createFromArray($value));
+		return $data;
 	}
 
 

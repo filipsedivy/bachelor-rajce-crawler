@@ -34,6 +34,22 @@ final class UserController implements IController
 			$user = $this->service->getUser($entity, $page);
 			return $response->writeJsonBody($user);
 		} catch (\InvalidArgumentException $exception) {
+			throw $exception;
+			return $response->writeJsonBody($this->error('User not found'));
+		}
+	}
+
+
+	#[Path('/full/{user}')]
+	#[Method('GET')]
+	#[RequestParameter(name: 'user', type: 'string', description: 'User identification')]
+	public function full(ApiRequest $request, ApiResponse $response): ApiResponse
+	{
+		$entity = $this->service->check($request->getParameters());
+		try {
+			$user = $this->service->getFullUser($entity);
+			return $response->writeJsonBody($user);
+		} catch (\InvalidArgumentException $exception) {
 			return $response->writeJsonBody($this->error('User not found'));
 		}
 	}

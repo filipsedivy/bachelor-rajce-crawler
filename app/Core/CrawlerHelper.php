@@ -23,12 +23,16 @@ trait CrawlerHelper
 	{
 		$albums = Strings::trim($header->filter('.list-inline-item')->first()->text());
 		$views = Strings::trim($header->filter('.list-inline-item')->eq(1)->text());
-		$followers = Strings::trim($header->filter('.list-inline-item')->eq(2)->text());
+
+		$followersNode = $header->filter('.list-inline-item')->eq(2);
+		$followers = $followersNode->count() > 0
+			? Strings::trim($header->filter('.list-inline-item')->eq(2)->text())
+			: 0;
 
 		return [
 			'albums' => $this->getDigitsFromString($albums),
 			'views' => $this->getDigitsFromString($views),
-			'followers' => $this->getDigitsFromString($followers),
+			'followers' => is_int($followers) ? $followers : $this->getDigitsFromString($followers),
 		];
 	}
 

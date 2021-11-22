@@ -4,6 +4,7 @@ parameters:
 
 extensions:
     api: Apitte\Core\DI\ApiExtension
+    redis: Contributte\Redis\DI\RedisExtension
 
 
 session:
@@ -27,3 +28,12 @@ api:
             debug:
                 panel: %debugMode%
                 negotiation: %debugMode%
+
+
+redis:
+	debug: %debugMode%
+
+	connection:
+		default:
+			uri: tcp://redis:6379
+			options: []

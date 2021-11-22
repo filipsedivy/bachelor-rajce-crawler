@@ -3,9 +3,14 @@ declare(strict_types=1);
 
 namespace App\Model\Entity;
 
+use App\Core;
+use Nette;
 
 final class AlbumEntity
 {
+	use Nette\SmartObject;
+	use Core\Arrays;
+
 	private int $id;
 
 	private string $url;
@@ -51,21 +56,21 @@ final class AlbumEntity
 		$entity->id = $data['id'];
 		$entity->url = $data['url'];
 		$entity->permalink = $data['permalink'];
-		$entity->userUrl = $data['user_url'];
+		$entity->userUrl = self::findValueFromKeys($data, ['user_url', 'userUrl']);
 		$entity->name = $data['name'];
 		$entity->username = $data['username'];
-		$entity->public = $data['is_public'];
-		$entity->codeProtected = $data['is_code_protected'];
-		$entity->nsfw = $data['is_nsfw'];
-		$entity->new = $data['is_new'];
+		$entity->public = self::findValueFromKeys($data, ['is_public', 'public']);
+		$entity->codeProtected = self::findValueFromKeys($data, ['is_code_protected', 'codeProtected']);
+		$entity->nsfw = self::findValueFromKeys($data, ['is_nsfw', 'nsfw']);
+		$entity->new = self::findValueFromKeys($data, ['is_new', 'new']);
 		$entity->storage = $data['storage'];
-		$entity->viewCount = $data['view_count'];
-		$entity->mediaCommentCount = $data['media_comment_count'];
-		$entity->commentCount = $data['comment_count'];
-		$entity->mediaCount = $data['media_count'];
-		$entity->videoCount = $data['video_count'];
-		$entity->likeCount = $data['like_count'];
-		$entity->photoCount = $data['photo_count'];
+		$entity->viewCount = self::findValueFromKeys($data, ['view_count', 'viewCount']);
+		$entity->mediaCommentCount = self::findValueFromKeys($data, ['media_comment_count', 'mediaCommentCount']);
+		$entity->commentCount = self::findValueFromKeys($data, ['comment_count', 'commentCount']);
+		$entity->mediaCount = self::findValueFromKeys($data, ['media_count', 'mediaCount']);
+		$entity->videoCount = self::findValueFromKeys($data, ['video_count', 'videoCount']);
+		$entity->likeCount = self::findValueFromKeys($data, ['like_count', 'likeCount']);
+		$entity->photoCount = self::findValueFromKeys($data, ['photo_count', 'photoCount']);
 		$entity->description = $data['description'];
 		return $entity;
 	}

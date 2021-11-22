@@ -22,7 +22,8 @@
 		"fabpot/goutte": "^4.0",
 		"apitte/debug": "^0.8.0",
 		"apitte/negotiation": "^0.8.0",
-		"latte/latte": "^2.10"
+		"latte/latte": "^2.10",
+		"contributte/redis": "^0.4.1"
 	},
 	"require-dev": {
 		"nette/tester": "^2.3",
