@@ -1,4 +1,4 @@
-FROM php:8-fpm-alpine
+FROM php:8.1-fpm-alpine
 LABEL MAINTAINER="Filip Sedivy <mail@filipsedivy.cz>"
 
 # Environments
