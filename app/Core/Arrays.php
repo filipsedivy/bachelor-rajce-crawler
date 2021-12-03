@@ -7,6 +7,13 @@ use Nette;
 
 trait Arrays
 {
+	/**
+	 * @template T
+	 * @param  array<T> $array
+	 * @param  array-key[] $key
+	 * @return ?T
+	 * @throws Nette\InvalidArgumentException
+	 */
 	private static function findValueFromKeys(array $array, array $keys, ?string $default = null)
 	{
 		foreach ($keys as $key) {

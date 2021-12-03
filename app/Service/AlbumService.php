@@ -29,6 +29,7 @@ final class AlbumService
 	}
 
 
+	/** @var mixed[] $data */
 	public function check(array $data): Model\Request\AlbumParams
 	{
 		$processor= new Schema\Processor;

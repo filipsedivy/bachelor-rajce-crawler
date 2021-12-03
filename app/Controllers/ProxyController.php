@@ -25,10 +25,12 @@ final class ProxyController implements Core\UI\Controller\IController
 	public function user(Core\Http\ApiRequest $request, Core\Http\ApiResponse $response): Core\Http\ApiResponse
 	{
 		try {
-			$params = $this->userService->check($request->getParameters());
+			$requestParameters = is_array($request->getParameters()) ? $request->getParameters() : [];
+			$params = $this->userService->check($requestParameters);
 
 			if ($request->getQueryParam('full', null) === null) {
-				$page = (int) $request->getQueryParam('page', 0);
+				$queryParameter = $request->getQueryParam('page', 0);
+				$page = ctype_digit($queryParameter) ? (int) $queryParameter : 0;
 				$result = $this->userService->getOnePage($params, $page);
 			} else {
 				$result = $this->userService->getAllPage($params);
@@ -48,7 +50,8 @@ final class ProxyController implements Core\UI\Controller\IController
 	public function album(Core\Http\ApiRequest $request, Core\Http\ApiResponse $response): Core\Http\ApiResponse
 	{
 		try {
-			$params = $this->albumService->check($request->getParameters());
+			$requestParameters = is_array($request->getParameters()) ? $request->getParameters() : [];
+			$params = $this->albumService->check($requestParameters);
 			return $response->writeJsonBody($this->albumService->getPhotos($params));
 		} catch (\InvalidArgumentException $exception) {
 			return $response->writeJsonBody($this->error('User not found'));

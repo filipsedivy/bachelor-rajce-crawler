@@ -19,6 +19,9 @@ trait CrawlerHelper
 	}
 
 
+	/**
+	 * @return array{albums: int, views: int, followers: int}
+	 */
 	public function parseUserHeader(Crawler $header): array
 	{
 		$albums = Strings::trim($header->filter('.list-inline-item')->first()->text());
