@@ -23,6 +23,8 @@ final class AlbumEntity
 
 	private string $username;
 
+	private string $album;
+
 	private bool $public;
 
 	private bool $codeProtected;
@@ -59,6 +61,7 @@ final class AlbumEntity
 		$entity->userUrl = self::findValueFromKeys($data, ['user_url', 'userUrl']);
 		$entity->name = $data['name'];
 		$entity->username = $data['username'];
+		$entity->album = $data['album'];
 		$entity->public = self::findValueFromKeys($data, ['is_public', 'public']);
 		$entity->codeProtected = self::findValueFromKeys($data, ['is_code_protected', 'codeProtected']);
 		$entity->nsfw = self::findValueFromKeys($data, ['is_nsfw', 'nsfw']);
@@ -109,6 +112,12 @@ final class AlbumEntity
 	public function getUsername(): string
 	{
 		return $this->username;
+	}
+
+
+	public function getAlbum(): string
+	{
+		return $this->album;
 	}
 
 

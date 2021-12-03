@@ -5,9 +5,10 @@ namespace App\Service;
 
 use App\Core\BrowserKitFactory;
 use App\Core\CrawlerHelper;
+use App\Model;
 use App\Model\Entity\AlbumEntity;
-use App\Model\Entity\UserEntity;
 use Goutte\Client;
+use Nette;
 use Nette\Schema;
 use Nette\Utils\Arrays;
 use Nette\Utils\Json;
@@ -24,34 +25,32 @@ final class UserService
 
 	private const USER_DATA = 'user:data';
 
-	private const ALBUM_KEY = 'album';
+	private const ALBUM_KEY = 'album:list';
 
 	private Client $client;
-
-	private Predis\Client $predis;
 
 	private int $offset;
 
 
 	public function __construct(
+		private StorageService $storageService,
+		private AlbumService $albumService,
+		private Predis\Client $predis,
 		BrowserKitFactory $browserKitFactory,
-		Predis\Client $predis,
 		int $offset
-	)
-	{
+	) {
 		$this->client = $browserKitFactory->create();
-		$this->predis = $predis;
 		$this->offset = $offset;
 	}
 
 
-	public function isUserExists(UserEntity $entity): bool
+	public function isUserExists(Model\Request\UserParams $entity): bool
 	{
 		$key = self::USER_EXISTS_KEY . ':' . $entity->user;
 		$value = $this->predis->get($key);
 
 		if ($value === null) {
-			$this->client->request('GET', $this->createBaseUrl($entity));
+			$this->client->request('GET', $this->createUrl($entity)->absoluteUrl);
 			$value = $this->client->getInternalResponse()->getStatusCode() === 200;
 			$this->predis->set($key, Json::encode(['result' => $value]), 'EX', 60 * 5);
 		} else {
@@ -62,39 +61,13 @@ final class UserService
 	}
 
 
-	public function getFullUser(UserEntity $entity): array
+	public function getOnePage(Model\Request\UserParams $params, int $page = 0): array
 	{
-		if (!$this->isUserExists($entity)) {
+		if (!$this->isUserExists($params)) {
 			throw new \InvalidArgumentException('User not found');
 		}
 
-		// Load first page
-		$result = $this->getUser($entity);
-		$accessCode = $result['security']['accessCode'];
-
-		// Get total pages
-		$totalPages = $result['page']['total'];
-
-		if ($totalPages > 1) {
-			for ($page = 1; $page <= $totalPages; $page++) {
-				$albumPage = Arrays::map($this->getPage($entity, $accessCode, $page), fn(AlbumEntity $value) => $value->toArray());
-				$result['albums'] = array_merge($result['albums'], $albumPage);
-				$result['page']['actual'] = $page;
-			}
-		}
-
-		return $result;
-	}
-
-
-	/** @return mixed[] */
-	public function getUser(UserEntity $entity, int $page = 0): array
-	{
-		if (!$this->isUserExists($entity)) {
-			throw new \InvalidArgumentException('User not found');
-		}
-
-		$response = $this->client->request('GET', $this->createBaseUrl($entity));
+		$response = $this->client->request('GET', $this->createUrl($params)->absoluteUrl);
 		$script = Strings::trim($response->filter('script')->text());
 		$accessCode = $this->getAccessCode($script);
 		$userHeader = $this->parseUserHeader($response->filter('.user-header-content'));
@@ -111,36 +84,73 @@ final class UserService
 				'accessCode' => $accessCode,
 			],
 			'information' => $userHeader,
-			'albums' => Arrays::map($this->getPage($entity, $accessCode, $page), fn(AlbumEntity $value) => $value->toArray()),
+			'albums' => Arrays::map($this->getPage($params, $accessCode, $page), fn(AlbumEntity $value) => $value->toArray()),
 		];
 	}
 
 
-	public function check(array $data): UserEntity
+	public function getAllPage(Model\Request\UserParams $params): array
+	{
+		if (!$this->isUserExists($params)) {
+			throw new \InvalidArgumentException('User not found');
+		}
+
+		$response = $this->client->request('GET', $this->createUrl($params)->absoluteUrl);
+		$script = Strings::trim($response->filter('script')->text());
+		$accessCode = $this->getAccessCode($script);
+		$userHeader = $this->parseUserHeader($response->filter('.user-header-content'));
+
+		$totalPages = ceil($userHeader['albums'] / $this->offset);
+		$albums = [];
+
+		for ($p = 0; $p <= $totalPages; $p++) {
+			$page = Arrays::map(
+				$this->getPage($params, $accessCode, $p),
+				fn(AlbumEntity $value) => $value->toArray()
+			);
+
+			$albums = array_merge($albums, $page);
+		}
+
+		return [
+			'page' => [
+				'itemPerPage' => $this->offset,
+				'total' => $totalPages,
+			],
+			'security' => [
+				'accessCode' => $accessCode,
+			],
+			'information' => $userHeader,
+			'albums' => $albums,
+		];
+	}
+
+
+	public function check(array $data): Model\Request\UserParams
 	{
 		$processor = new Schema\Processor;
 		$schema = Schema\Expect::structure([
 			'user' => Schema\Expect::string()->required(),
-		])->castTo(UserEntity::class);
+		])->castTo(Model\Request\UserParams::class);
 		return $processor->process($schema, $data);
 	}
 
 
 	/** @return AlbumEntity[] */
-	private function getPage(UserEntity $entity, string $accessCode, int $page): array
+	private function getPage(Model\Request\UserParams $params, string $accessCode, int $page): array
 	{
-		$key = self::USER_DATA . ':' . $entity->user . ':page:' . $page;
+		$key = self::USER_DATA . ':' . $params->user . ':page:' . $page;
 
 		if ($this->predis->exists($key) === 0) {
 			$payload = [
-				'username' => $entity->user,
+				'username' => $params->user,
 				'sort' => 'createDateDesc',
-				'offset' => $page * 23,
-				'limit' => 23,
+				'offset' => $page * $this->offset,
+				'limit' => $this->offset,
 				'access_code' => $accessCode,
 			];
 
-			$this->client->request('POST', $this->createBaseUrl($entity) . '/services/web/get-albums', $payload);
+			$this->client->request('POST', $this->createUrl($params)->absoluteUrl . 'services/web/get-albums', $payload);
 			$response = Json::decode($this->client->getInternalResponse()->getContent(), Json::FORCE_ARRAY);
 
 			if (Arrays::get($response, 'status') !== self::SUCCESS_STATUS) {
@@ -148,11 +158,20 @@ final class UserService
 			}
 
 			$data = Arrays::map($response['data']['albums'], function ($value): AlbumEntity {
+				$albumParams = $this->albumService->createFromString($value['url']);
+				$value['album'] = $albumParams->album;
+
 				$entity = AlbumEntity::createFromArray($value);
 				$key = self::ALBUM_KEY . ':' . $entity->getId();
 				if ($this->predis->exists($key) === 0) {
 					$this->predis->set($key, Json::encode($entity->toArray()));
 				}
+
+				// Save album storage
+				if ($entity->getStorage() !== null) {
+					$this->storageService->set($albumParams, $entity->getStorage());
+				}
+
 				return $entity;
 			});
 
@@ -170,8 +189,12 @@ final class UserService
 	}
 
 
-	private function createBaseUrl(UserEntity $entity): string
+	private function createUrl(Model\Request\UserParams $params): Nette\Http\Url
 	{
-		return sprintf('https://%s.rajce.idnes.cz', $entity->user);
+		$url = new Nette\Http\Url;
+		$url->setScheme('https')
+			->setHost($params->user . '.rajce.idnes.cz');
+
+		return $url;
 	}
 }

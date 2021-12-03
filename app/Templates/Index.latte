@@ -45,16 +45,35 @@
 
     <tbody>
     <tr>
-        <td>/user/<code class="parameter">[user name]</code></td>
-        <td>GET</td>
-        <td>page=<b>int</b> | default=0</td>
-        <td>Get basic user and album information</td>
+        <td colspan="4" style="color: darkred"><b>Proxy</b></td>
     </tr>
+
     <tr>
-        <td>/user/full/<code class="parameter">[user name]</code></td>
+        <td>/proxy/user/<code class="parameter">[user name]</code></td>
+        <td>GET</td>
+        <td>
+            <code>full</code> | <code>default=false</code> | Get all pages from one request <br>
+            <code>page=<b>int</b></code> | <code>default=0</code> | Page
+        </td>
+        <td>Get basic user and albums information</td>
+    </tr>
+
+    <tr>
+        <td>/proxy/user/<code class="parameter">[user name]</code>/<code class="parameter">[album]</code></td>
         <td>GET</td>
         <td></td>
-        <td>Get basic user and full albums information</td>
+        <td>Get all photos by user and album</td>
+    </tr>
+
+    <tr>
+        <td colspan="4" style="color: darkred"><b>Storage</b></td>
+    </tr>
+
+    <tr>
+        <td>/storage/flush</td>
+        <td>DELETE</td>
+        <td></td>
+        <td>Flush all storage cache</td>
     </tr>
     </tbody>
 </table>

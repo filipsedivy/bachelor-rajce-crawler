@@ -1,7 +1,14 @@
 services:
+    # Core
     - App\Core\BrowserKitFactory
+
+    # Controllers
     - App\Controllers\IndexController
+    - App\Controllers\ProxyController
     - App\Controllers\PingController
-    - App\Controllers\UserController
+    - App\Controllers\StorageController
+
+    # Services
     - App\Service\UserService(offset: 23)
-    - App\Router\RouterFactory::createRouter
+    - App\Service\StorageService
+    - App\Service\AlbumService
