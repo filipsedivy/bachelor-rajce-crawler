@@ -4,7 +4,7 @@
 	"type": "project",
 	"license": "MIT",
 	"require": {
-		"php": ">= 7.2",
+		"php": ">= 8.0",
 		"nette/application": "^3.1",
 		"nette/bootstrap": "^3.1",
 		"nette/caching": "^3.1",
@@ -13,23 +13,23 @@
 		"nette/forms": "^3.1",
 		"nette/http": "^3.1",
 		"nette/mail": "^3.1",
-		"nette/robot-loader": "^3.3",
+		"nette/robot-loader": "^3.4",
 		"nette/security": "^3.1",
 		"nette/utils": "^3.2",
 		"tracy/tracy": "^2.8",
-		"apitte/core": "^0.8.1",
+		"apitte/core": "^0.8",
 		"nette/schema": "^1.2",
 		"fabpot/goutte": "^4.0",
-		"apitte/debug": "^0.8.0",
-		"apitte/negotiation": "^0.8.0",
+		"apitte/debug": "^0.8",
+		"apitte/negotiation": "^0.8",
 		"latte/latte": "^2.10",
-		"contributte/redis": "^0.4.1"
+		"contributte/redis": "^0.4"
 	},
 	"require-dev": {
-		"nette/tester": "^2.3",
+		"nette/tester": "^2.4",
 		"symfony/thanks": "^1",
-		"phpstan/phpstan": "^1.1",
-		"nette/coding-standard": "^3.0"
+		"phpstan/phpstan": "^1.2",
+		"nette/coding-standard": "^3.1"
 	},
 	"autoload": {
 		"psr-4": {
